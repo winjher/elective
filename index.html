@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Midterm Examination</title>
+<style>
+  :root{
+    --navy:#12233f; --navy-2:#1c3762; --accent:#c8a04d; --accent-2:#9c7b30;
+    --bg:#f4f2ec; --paper:#ffffff; --ink:#1c1d21; --muted:#6b7280;
+    --line:#e2ddd0; --good:#1e7a3d; --bad:#b3261e; --radius:10px;
+    box-sizing:border-box;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Georgia","Iowan Old Style",serif;line-height:1.5;}
+  body{padding:24px 16px 60px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  h1,h2,h3{font-family:"Palatino Linotype","Book Antiqua",Georgia,serif;color:var(--navy);}
+  header.title{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    color:#fff;border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;
+    box-shadow:0 6px 18px rgba(18,35,63,.18);
+  }
+  header.title h1{color:#fff;margin:0 0 4px;font-size:1.5rem;letter-spacing:.02em;}
+  header.title p{margin:2px 0;color:#dfe4ee;font-size:.92rem;}
+  .badge{display:inline-block;background:var(--accent);color:#2b2205;font-weight:700;
+    border-radius:999px;padding:3px 12px;font-size:.78rem;letter-spacing:.03em;margin-top:8px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px 24px;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+  label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:.04em;}
+  input[type=text], input[type=date]{
+    width:100%;padding:10px 12px;border:1px solid #c9c4b4;border-radius:8px;
+    font-size:1rem;font-family:Georgia,serif;background:#fffdf8;
+  }
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr;}}
+  .field{margin-bottom:14px;}
+  button{
+    font-family:Arial,sans-serif;font-weight:700;letter-spacing:.02em;
+    background:var(--navy);color:#fff;border:none;border-radius:8px;
+    padding:13px 26px;font-size:1rem;cursor:pointer;transition:background .15s ease;
+  }
+  button:hover{background:var(--navy-2);}
+  button.gold{background:var(--accent);color:#2b2205;}
+  button.gold:hover{background:var(--accent-2);color:#fff;}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .hint{font-family:Arial,sans-serif;font-size:.82rem;color:var(--muted);margin-top:6px;}
+  #err{color:var(--bad);font-family:Arial,sans-serif;font-size:.85rem;margin-top:8px;display:none;}
+
+  /* Exam header bar / timer */
+  #examBar{
+    position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;
+    border-radius:var(--radius);padding:10px 18px;margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+    box-shadow:0 4px 14px rgba(18,35,63,.25);font-family:Arial,sans-serif;
+  }
+  #examBar .who{font-size:.85rem;color:#dfe4ee;}
+  #examBar .who b{color:#fff;}
+  .attempt-pill{background:rgba(255,255,255,.14);border-radius:999px;padding:2px 10px;font-weight:700;}
+  .attempt-pill.repeat{background:var(--accent);color:#2b2205;}
+  .equiv-pill.attempt-note{background:#eef1f7;color:var(--navy);margin-left:8px;}
+  #timer{font-family:"Consolas","Menlo",monospace;font-size:1.3rem;font-weight:700;
+    background:rgba(255,255,255,.12);padding:4px 14px;border-radius:8px;letter-spacing:.03em;}
+  #timer.low{background:var(--bad);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+  .part-title{border-bottom:2px solid var(--accent);padding-bottom:8px;margin:26px 0 14px;}
+  .part-title h2{margin:0;font-size:1.2rem;}
+  .part-title p{font-family:Arial,sans-serif;font-size:.85rem;color:var(--muted);margin:4px 0 0;}
+
+  .q{border-bottom:1px solid var(--line);padding:16px 0;}
+  .q:last-child{border-bottom:none;}
+  .qnum{font-weight:700;color:var(--navy);font-family:Arial,sans-serif;font-size:.8rem;margin-right:6px;}
+  .qtext{font-size:1.02rem;margin-bottom:10px;}
+  .choices{display:grid;gap:8px;}
+  .choice{
+    display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;font-size:.93rem;background:#fffefb;
+    transition:border-color .12s, background .12s;
+  }
+  .choice:hover{border-color:var(--accent);background:#fdf8ec;}
+  .choice input{margin-top:2px;accent-color:var(--navy);flex-shrink:0;}
+  .choice.checked{border-color:var(--navy);background:#eef1f7;}
+  .defRow input{max-width:420px;}
+
+  #topProgress{
+    position:sticky; top:56px; z-index:19; height:6px; background:var(--line);
+    border-radius:4px; margin-bottom:6px; overflow:hidden;
+  }
+  #topProgress > div{height:100%;background:var(--accent);width:0%;transition:width .2s;}
+
+  .footer-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
+  #screen-start, #screen-exam, #screen-results{display:none;}
+  .show{display:block !important;}
+
+  /* Results */
+  .score-hero{
+    text-align:center;padding:26px 10px 18px;background:linear-gradient(135deg,#fff 0%,#faf6ea 100%);
+    border-radius:var(--radius);border:1px solid var(--line);
+  }
+  .score-hero .big{font-size:3rem;font-weight:800;color:var(--navy);font-family:Arial,sans-serif;}
+  .score-hero .sub{color:var(--muted);font-family:Arial,sans-serif;}
+  .equiv-pill{display:inline-block;margin-top:10px;padding:6px 18px;border-radius:999px;
+    font-family:Arial,sans-serif;font-weight:700;font-size:.95rem;}
+  .equiv-pass{background:#dff3e3;color:var(--good);}
+  .equiv-fail{background:#fbe2e0;color:var(--bad);}
+
+  table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:.88rem;margin-top:10px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:700;text-transform:uppercase;font-size:.72rem;letter-spacing:.03em;}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .bar-cell{width:38%;}
+  .bar-track{background:var(--line);border-radius:6px;height:10px;overflow:hidden;}
+  .bar-fill{background:var(--navy);height:100%;}
+
+  .review-item{border-bottom:1px solid var(--line);padding:10px 0;font-family:Arial,sans-serif;font-size:.9rem;}
+  .review-item .tag{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 8px;
+    border-radius:999px;margin-right:8px;font-family:Arial,sans-serif;}
+  .tag.correct{background:#dff3e3;color:var(--good);}
+  .tag.wrong{background:#fbe2e0;color:var(--bad);}
+  details summary{cursor:pointer;font-family:Arial,sans-serif;font-weight:700;color:var(--navy);margin:16px 0 4px;}
+
+  .print-btn{background:#3a4a63;}
+  @media print{
+    #examBar, .footer-actions, #printBtn, .no-print{display:none !important;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ START SCREEN ============ -->
+  <div id="screen-start" class="show">
+    <header class="title">
+      <h1>Midterm Examination</h1>
+      <p>Total: 100 Items &nbsp;|&nbsp; 100 Points</p>
+      <p>Part I: Multiple Choice (50) &nbsp;•&nbsp; Part II: Definition (50)</p>
+      <p>Coverage: Internet Bandwidth &amp; Technology Issues &nbsp;•&nbsp; Business Process Reengineering for E-Commerce &nbsp;•&nbsp; Security Framework: Concerns &amp; Solutions &nbsp;•&nbsp; Global Supply Chain &amp; Brand Strategy &nbsp;•&nbsp; Cryptography Lesson 1</p>
+      <p>Examiner: Dr. Jerwin M. Montellano</p>
+      <span class="badge">TIME LIMIT: 3 HOURS</span>
+    </header>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Examinee Information</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="fSection">Section</label>
+          <select id="fSection">
+            <option value="">— Select your section —</option>
+            <option value="CS 4-1">CS 4-1</option>
+            <option value="CS 4-3">CS 4-3</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fStudentNo">Student Number</label>
+          <input type="text" id="fStudentNo" placeholder="e.g., 202334096" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="fName">Name</label>
+          <input type="text" id="fName" placeholder="Auto-filled from your student number" readonly>
+        </div>
+        <div class="field">
+          <label for="fDate">Date</label>
+          <input type="date" id="fDate">
+        </div>
+      </div>
+      <p class="hint" id="lookupHint">Select your section, then enter your student number — your name will fill in automatically.</p>
+      <p class="hint">Once you click <b>Start Examination</b>, a 3-hour countdown begins immediately. The exam auto-submits when time runs out, so make sure you're ready before starting.</p>
+      <div id="err">Please select your section and enter a valid student number found on the class list, plus today's date, before starting.</div>
+      <div class="footer-actions">
+        <button class="gold" id="startBtn">Start Examination →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ EXAM SCREEN ============ -->
+  <div id="screen-exam">
+    <div id="examBar">
+      <div class="who">Examinee: <b id="barName">—</b> &nbsp;|&nbsp; No: <b id="barStudentNo">—</b> &nbsp;|&nbsp; Section: <b id="barSection">—</b> &nbsp;|&nbsp; Date: <b id="barDate">—</b> &nbsp;|&nbsp; <span id="barAttempt" class="attempt-pill">1st attempt</span> &nbsp;|&nbsp; Ends at: <b id="barEndTime">—</b></div>
+      <div id="timer">03:00:00</div>
+    </div>
+    <div id="topProgress"><div id="topProgressFill"></div></div>
+
+    <div class="part-title">
+      <h2>Part I. Multiple Choice (Items 1–50, 1 point each)</h2>
+      <p>Read each item carefully. Select the best answer.</p>
+    </div>
+    <div class="card" id="mcqContainer"></div>
+
+    <div class="part-title">
+      <h2>Part II. Definition (Items 51–100, 1 point each)</h2>
+      <p>Write the correct term or concept being defined.</p>
+    </div>
+    <div class="card" id="defContainer"></div>
+
+    <div class="footer-actions">
+      <button class="gold" id="submitBtn">Finish &amp; Submit Exam</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS SCREEN ============ -->
+  <div id="screen-results">
+    <header class="title">
+      <h1>Examination Results</h1>
+      <p id="resWho">—</p>
+      <span id="resAttemptBadge" class="badge" style="display:none;"></span>
+    </header>
+
+    <div class="card score-hero">
+      <div class="sub">TOTAL SCORE</div>
+      <div class="big" id="resScore">0 / 100</div>
+      <div class="sub" id="resPct">0%</div>
+      <div id="resEquiv" class="equiv-pill">—</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Score Summary</h2>
+      <table>
+        <tr><th>Part</th><th class="num">Correct</th><th class="num">Total</th><th class="num">%</th></tr>
+        <tr><td>Part I — Multiple Choice</td><td class="num" id="p1c"></td><td class="num">50</td><td class="num" id="p1pct"></td></tr>
+        <tr><td>Part II — Definition</td><td class="num" id="p2c"></td><td class="num">50</td><td class="num" id="p2pct"></td></tr>
+        <tr><td><b>Overall</b></td><td class="num" id="ovc"><b></b></td><td class="num"><b>100</b></td><td class="num" id="ovpct"><b></b></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Frequency by Topic</h2>
+      <table id="topicTable">
+        <tr><th>Topic</th><th class="bar-cell">Performance</th><th class="num">Score</th><th class="num">%</th></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Grading Equivalency Scale</h2>
+      <table id="equivTable"></table>
+    </div>
+
+    <div class="card no-print">
+      <details>
+        <summary>Show item-by-item review (Part I)</summary>
+        <div id="reviewP1"></div>
+      </details>
+      <details>
+        <summary>Show item-by-item review (Part II)</summary>
+        <div id="reviewP2"></div>
+      </details>
+    </div>
+
+    <div class="footer-actions">
+      <button class="gold" id="pdfBtn">⬇ Download Result as PDF</button>
+      <button class="print-btn" id="printBtn">Print / Save as PDF (browser)</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ============================================================
+   EXAM DATA (embedded — generated from the uploaded exam file)
+   ============================================================ */
+const EXAM = {"mcq": [{"num": 1, "q": "Which two major categories of issues affect digital storefront performance?", "choices": {"A": "Pricing issues and inventory shortages", "B": "Bandwidth & latency issues and tech stack bottlenecks", "C": "Payment fraud and shipping delays", "D": "Branding problems and advertising costs"}}, {"num": 2, "q": "What percentage of mobile visits are abandoned when a webpage takes longer than 3 seconds to render?", "choices": {"A": "23%", "B": "38%", "C": "53%", "D": "75%"}}, {"num": 3, "q": "What conversion rate corresponds to a 1-second page load time?", "choices": {"A": "3.05%", "B": "2.50%", "C": "1.20%", "D": "0.58%"}}, {"num": 4, "q": "Compared with a 1-second load time, a 10-second load time produces how many times fewer conversions?", "choices": {"A": "2x", "B": "3x", "C": "4x", "D": "5x"}}, {"num": 5, "q": "Which next-generation image formats are recommended to replace legacy JPEG/PNG files?", "choices": {"A": "BMP and TIFF", "B": "GIF and SVG", "C": "WebP and AVIF", "D": "RAW and PSD"}}, {"num": 6, "q": "Up to how much can next-generation image formats cut image payload sizes without quality loss?", "choices": {"A": "20%", "B": "40%", "C": "60%", "D": "80%"}}, {"num": 7, "q": "An optimized tech stack loads a page in an average of how many seconds, compared with 6.8 seconds for legacy architecture?", "choices": {"A": "1.1 seconds", "B": "2.4 seconds", "C": "3.0 seconds", "D": "4.2 seconds"}}, {"num": 8, "q": "Excessive analytics trackers, ad pixels, and chat widgets that hog the main CPU thread primarily cause which problem?", "choices": {"A": "Uncompressed image payloads", "B": "Interactivity delays measured as FID/INP", "C": "Expired security certificates", "D": "Database replication lag"}}, {"num": 9, "q": "Which asset-delivery method is used by the optimized tech stack?", "choices": {"A": "Single-origin shared hosting", "B": "Global CDN edge with auto-scaling", "C": "On-premise dedicated server only", "D": "Peer-to-peer file sharing"}}, {"num": 10, "q": "Which mobile drop-off rate is associated with the optimized architecture?", "choices": {"A": "Less than 12%", "B": "About 25%", "C": "About 38%", "D": "About 53%"}}, {"num": 11, "q": "Who authored the quoted definition of reengineering that asks, “If I were recreating this company today…”?", "choices": {"A": "W. Edwards Deming and Joseph Juran", "B": "Michael Hammer and James Champy", "C": "Michael Porter and Philip Kotler", "D": "Frederick Taylor and Henri Fayol"}}, {"num": 12, "q": "Which of the following is NOT one of the four areas in which BPR aims to achieve dramatic improvement?", "choices": {"A": "Cost", "B": "Quality", "C": "Delivery speed", "D": "Employee seniority"}}, {"num": 13, "q": "What is the correct order of the four phases of the BPR Implementation Roadmap?", "choices": {"A": "Diagnose, Envision, Redesign, Transform", "B": "Envision, Diagnose, Redesign, Transform", "C": "Envision, Redesign, Diagnose, Transform", "D": "Diagnose, Redesign, Transform, Envision"}}, {"num": 14, "q": "In which BPR phase are AS-IS workflows mapped to identify bottlenecks, delays, and excess handoffs?", "choices": {"A": "Diagnose", "B": "Envision", "C": "Redesign", "D": "Transform"}}, {"num": 15, "q": "What percentage of routine delivery tracking inquiries can AI-driven self-service portals resolve without human agents?", "choices": {"A": "40%", "B": "60%", "C": "80%", "D": "95%"}}, {"num": 16, "q": "What order cycle reduction is cited as an impact metric of BPR?", "choices": {"A": "25%", "B": "45%", "C": "60%", "D": "70%"}}, {"num": 17, "q": "What operating cost percentage is achieved by a reengineered omnichannel process?", "choices": {"A": "18%", "B": "35%", "C": "70%", "D": "82%"}}, {"num": 18, "q": "What are the “3 C’s” driving the need for reengineering?", "choices": {"A": "Cost, Quality, and Control", "B": "Cloud, Cybersecurity, and Commerce", "C": "Customers, Competition, and Change", "D": "Culture, Capital, and Compliance"}}, {"num": 19, "q": "Which technology enabler monitors performance metrics instantly to detect bottlenecks before they affect the consumer experience?", "choices": {"A": "Real-Time Analytics Dashboard", "B": "Cloud ERP Infrastructure", "C": "API-First Microservices", "D": "AI & Automated Decisioning"}}, {"num": 20, "q": "How does a reengineered process handle financial settlement, compared with the traditional method of deferred paper billing and checks?", "choices": {"A": "Periodic manual batch settlement", "B": "Instant tokenized electronic funds transfer", "C": "Cash-on-delivery only", "D": "Quarterly invoice reconciliation"}}, {"num": 21, "q": "Which attack involves intercepting and retransmitting valid packets so that a system processes a legitimate transaction more than once?", "choices": {"A": "Replay attack", "B": "Spoofing", "C": "Repudiation dispute", "D": "Data tampering"}}, {"num": 22, "q": "What defines symmetric cryptography in terms of key usage?", "choices": {"A": "Two mathematically linked keys are used", "B": "A public key encrypts while a private key decrypts", "C": "Hash digests replace keys entirely", "D": "One shared key handles both encryption and decryption"}}, {"num": 23, "q": "Which of the following is NOT a symmetric cipher?", "choices": {"A": "AES", "B": "Blowfish", "C": "RSA", "D": "3DES"}}, {"num": 24, "q": "Which PKCS standard specifies Certificate Signing Requests (CSRs)?", "choices": {"A": "PKCS#1", "B": "PKCS#7", "C": "PKCS#8", "D": "PKCS#10"}}, {"num": 25, "q": "Which file extensions are associated with the PKCS#12 format for Personal Information Exchange?", "choices": {"A": ".doc / .docx", "B": ".zip / .rar", "C": ".pfx / .p12", "D": ".exe / .dll"}}, {"num": 26, "q": "In the Key Management Lifecycle, which stage comes immediately after Storage?", "choices": {"A": "Distribution", "B": "Rotation", "C": "Revocation", "D": "Destruction"}}, {"num": 27, "q": "Which companies designed the SET protocol for secure card transactions over untrusted networks?", "choices": {"A": "IBM and Microsoft", "B": "Visa and Mastercard", "C": "PayPal and eBay", "D": "Apple and Google"}}, {"num": 28, "q": "Which of the following is NOT a core actor in a SET transaction?", "choices": {"A": "Cardholder", "B": "Merchant", "C": "Payment Gateway", "D": "Internet Service Provider"}}, {"num": 29, "q": "Which combination of solutions addresses the Integrity & Authentication goals?", "choices": {"A": "Symmetric (AES) with asymmetric (RSA/ECC) encryption", "B": "Hashes (SHA-256) with digital signatures", "C": "X.509 certificates with PKI", "D": "The PKCS family of standards"}}, {"num": 30, "q": "According to the framework, TLS/SSL operates between which two layers?", "choices": {"A": "Physical and Data Link layers", "B": "Network and Transport layers", "C": "Transport and Application layers", "D": "Session and Presentation layers"}}, {"num": 31, "q": "Which set lists the three advantages that give global brands their competitive edge?", "choices": {"A": "Economies of Scale, Prestige & Recognition, and Global Reach", "B": "Cultural Resonance, Supply Chain Agility, and National Pride", "C": "Freshness, Local Pricing, and Sustainability", "D": "Market Access, Cost Optimization, and Risk Mitigation"}}, {"num": 32, "q": "What percentage of consumers cite “Freshness & Product Quality” as a reason for switching to local brands?", "choices": {"A": "24%", "B": "32%", "C": "38%", "D": "48%"}}, {"num": 33, "q": "Which reason for switching to local brands was cited by the fewest consumers (24%)?", "choices": {"A": "Freshness & Product Quality", "B": "Supporting Local Economy", "C": "Better Value & Price Point", "D": "Sustainability & Eco-Impact"}}, {"num": 34, "q": "Which company has the highest brand value listed in the table?", "choices": {"A": "Amazon", "B": "Coca-Cola", "C": "Google", "D": "Samsung"}}, {"num": 35, "q": "Which company uses a fabless model with specialized foundry outsourcing?", "choices": {"A": "Samsung", "B": "Toyota", "C": "NVIDIA", "D": "Rolex"}}, {"num": 36, "q": "Which luxury brand is described as 100% vertically integrated, manufacturing all components in-house in Swiss facilities?", "choices": {"A": "Gucci", "B": "Rolex", "C": "Dior", "D": "Louis Vuitton"}}, {"num": 37, "q": "Toyota’s Just-In-Time sourcing is delivered as part of which system?", "choices": {"A": "Six Sigma", "B": "Total Quality Management", "C": "Toyota Production System", "D": "Balanced Scorecard"}}, {"num": 38, "q": "Which regions are highlighted as high-growth markets for local brand competitiveness?", "choices": {"A": "The Philippines and Southeast Asia", "B": "Northern Europe and Scandinavia", "C": "Canada and the United States", "D": "Australia and New Zealand"}}, {"num": 39, "q": "What percentage of global enterprises have adopted the shift toward hybrid sourcing?", "choices": {"A": "28%", "B": "48%", "C": "68%", "D": "88%"}}, {"num": 40, "q": "In the 4 Steps to Build a Global Strategy, which step involves deploying digital logistics control towers and partner ecosystems?", "choices": {"A": "Integration", "B": "Market Analysis", "C": "Model Selection", "D": "Scale & Adapt"}}, {"num": 41, "q": "In asymmetric encryption, which key encrypts the data and which key decrypts it?", "choices": {"A": "The public key encrypts; the private key decrypts", "B": "The same secret key encrypts and decrypts", "C": "A hash digest encrypts; a salt decrypts", "D": "A session key encrypts; a certificate decrypts"}}, {"num": 42, "q": "How long is the key of the legacy DES algorithm, which is now considered insecure?", "choices": {"A": "40 bits", "B": "56 bits", "C": "128 bits", "D": "256 bits"}}, {"num": 43, "q": "Which symmetric algorithm is considered the industry standard because it is fast, secure, and widely adopted?", "choices": {"A": "AES", "B": "DES", "C": "3DES", "D": "RSA"}}, {"num": 44, "q": "Which hash algorithm is secure, widely used, and part of the SHA-2 family?", "choices": {"A": "MD5", "B": "SHA-1", "C": "SHA-256", "D": "DSA"}}, {"num": 45, "q": "Which of the following is NOT a property of a good hash function?", "choices": {"A": "Deterministic", "B": "Reversible", "C": "Fixed output size", "D": "Collision resistant"}}, {"num": 46, "q": "Which two techniques are combined to create a digital signature?", "choices": {"A": "Symmetric encryption and salting", "B": "Compression and hashing", "C": "Hashing and symmetric encryption", "D": "Hashing and asymmetric encryption"}}, {"num": 47, "q": "In the “Sign the Hash” step of the digital signature process, the hash is encrypted with which key?", "choices": {"A": "The receiver’s public key", "B": "The sender’s public key", "C": "The sender’s private key", "D": "The receiver’s private key"}}, {"num": 48, "q": "Which algorithm is the elliptic-curve variant among the digital signature standards?", "choices": {"A": "DSA", "B": "ECDSA", "C": "RSA", "D": "SHA-256"}}, {"num": 49, "q": "Why are passwords stored as hashes instead of plaintext in case a database is breached?", "choices": {"A": "Hashed passwords can be decrypted to recover forgotten passwords", "B": "Hashing shortens passwords to save database storage space", "C": "Hashing lets administrators read every user’s password", "D": "Hashed passwords cannot be reversed to reveal the originals"}}, {"num": 50, "q": "How does TLS combine symmetric and asymmetric encryption?", "choices": {"A": "Symmetric encryption for key exchange, asymmetric for bulk data", "B": "Asymmetric encryption for hashing, symmetric for signatures", "C": "Both types only for generating hash digests", "D": "Asymmetric encryption for key exchange, symmetric for ongoing data"}}], "defs": [{"num": 51, "text": "A lightweight framework that prioritizes fast mobile viewport rendering, enabling instantaneous loading on mobile devices."}, {"num": 52, "text": "A network that caches and distributes web assets globally from edge locations."}, {"num": 53, "text": "A script-loading technique in which third-party scripts execute without blocking the main rendering thread."}, {"num": 54, "text": "The practice of distributing cached web assets globally to reduce the physical distance, and therefore the ping time, between the server and the end user."}, {"num": 55, "text": "The technique of routing concurrent shopper sessions across multiple cloud nodes so that no single server becomes overloaded."}, {"num": 56, "text": "An optimization approach that enables automatic HTTP/3 prioritization and TLS handshake acceleration to speed up content delivery."}, {"num": 57, "text": "Excessive analytics trackers, ad pixels, and chat widgets that hog the main CPU thread and cause severe interactivity delays."}, {"num": 58, "text": "The accumulation of unused JavaScript libraries and un-minified CSS stylesheets that block critical render paths and delay the initial page paint."}, {"num": 59, "text": "The rethinking and fundamental redesign of business processes to achieve dramatic improvements in performance, cost, quality, and delivery speed."}, {"num": 60, "text": "The incremental, continuous improvement approach that BPR is contrasted with."}, {"num": 61, "text": "A BPR principle that organizes operations around full end-to-end results rather than isolated tasks, eliminating unnecessary handoffs between departments."}, {"num": 62, "text": "A BPR principle in which customer, order, and inventory data are collected digitally at the single point of origin to remove manual data entry redundancies."}, {"num": 63, "text": "The capability that provides instant, unified inventory updates across multi-channel storefronts, warehouses, and 3PL networks."}, {"num": 64, "text": "The first phase of the BPR Implementation Roadmap, which defines clear business objectives, scope, and strategic customer value propositions."}, {"num": 65, "text": "The mapping of current workflows to identify bottlenecks, delays, and excess handoffs in the existing process."}, {"num": 66, "text": "The redesign approach that engineers new digital processes from scratch, powered by automated tools, instead of modifying the existing workflow."}, {"num": 67, "text": "A technology enabler that centralizes operations and enables single-source data updates for finance, inventory, and fulfillment across global channels."}, {"num": 68, "text": "A technology enabler that seamlessly connects storefront platforms, payment gateways, and third-party logistics (3PL) partners."}, {"num": 69, "text": "The security goal of restricting data access strictly to authorized recipients."}, {"num": 70, "text": "The security goal of guaranteeing that data remains unaltered in transit or in storage."}, {"num": 71, "text": "Irrefutable cryptographic proof of transmission that prevents a sender from denying a transaction."}, {"num": 72, "text": "An attack based on fake identity assumption, in which the attacker pretends to be someone else."}, {"num": 73, "text": "The problem in symmetric cryptography that arises because a secure out-of-band channel is required to exchange the shared key."}, {"num": 74, "text": "A “digital passport” that binds a subject identity to a public key through the signature of a trusted Certificate Authority."}, {"num": 75, "text": "The RSA Cryptography Standard, which defines the mathematical primitives, encryption schemes, and signature formats used with RSA."}, {"num": 76, "text": "Scheduled re-keying that restricts ciphertext exposure windows over time."}, {"num": 77, "text": "The secure erasing and wiping of all copies of a key so that it can no longer be recovered or used."}, {"num": 78, "text": "A decentralized trust model used in PGP/GPG in which users sign each other’s keys instead of relying on a centralized Certificate Authority."}, {"num": 79, "text": "A SET protocol mechanism that cryptographically links Order Information (for the merchant) with Payment Instructions (for the bank) without disclosing either to the other party."}, {"num": 80, "text": "An e-cash technique that lets a bank sign digital coins without being able to track specific user spending, preserving anonymity."}, {"num": 81, "text": "The global brand advantage created by standardized production, R&D distribution, and centralized marketing that drives operational efficiency."}, {"num": 82, "text": "A deep understanding of local consumer habits, traditions, and emotional triggers that lets local brands connect authentically with their home market."}, {"num": 83, "text": "A sourcing approach that combines a global brand identity with local bottling operations or regionally localized production, as in Coca-Cola’s strategy."}, {"num": 84, "text": "A sourcing model in which a company designs its chips but outsources the actual manufacturing to specialized third-party foundries."}, {"num": 85, "text": "A sourcing strategy in which a company manufactures its components or products entirely in-house, as Rolex and Samsung do."}, {"num": 86, "text": "The system used by Toyota, delivered through localized supplier hubs, in which materials arrive only as they are needed in production."}, {"num": 87, "text": "A small traditional neighborhood store in the Philippines with which local brands maintain strong distribution relationships."}, {"num": 88, "text": "A strategic sourcing model that combines real-time digital oversight with flexible multi-regional fulfillment."}, {"num": 89, "text": "Unpredictable delivery timing caused by port congestion and maritime disruptions, managed through buffer stock management and predictive analytics."}, {"num": 90, "text": "The tracking of carbon emissions across a company’s entire supplier network, required by stricter global ESG and carbon compliance regulations."}, {"num": 91, "text": "The science of securing communication and information against unauthorized access or alteration."}, {"num": 92, "text": "The security goal that verifies the identity of the sender or receiver."}, {"num": 93, "text": "Encryption in which the same secret key both encrypts and decrypts the data; also called private-key encryption."}, {"num": 94, "text": "Encryption that uses a mathematically linked key pair consisting of a public key and a private key."}, {"num": 95, "text": "A one-way function that turns any input into a fixed-size digest and is never reversible."}, {"num": 96, "text": "The hash function property meaning it is extremely difficult to find two different inputs that produce the same hash output."}, {"num": 97, "text": "The hash function property meaning it is extremely difficult to reverse-engineer the original input from its hash output."}, {"num": 98, "text": "A technique that combines hashing and asymmetric encryption to provide authentication, integrity, and non-repudiation."}, {"num": 99, "text": "The stronger successor to the legacy DES algorithm, named for applying the DES cipher three times."}, {"num": 100, "text": "An asymmetric algorithm whose security rests on the difficulty of factoring large prime numbers."}], "mcq_topic": {"1": "T1", "2": "T1", "3": "T1", "4": "T1", "5": "T1", "6": "T1", "7": "T1", "8": "T1", "9": "T1", "10": "T1", "11": "T2", "12": "T2", "13": "T2", "14": "T2", "15": "T2", "16": "T2", "17": "T2", "18": "T2", "19": "T2", "20": "T2", "21": "T3", "22": "T3", "23": "T3", "24": "T3", "25": "T3", "26": "T3", "27": "T3", "28": "T3", "29": "T3", "30": "T3", "31": "T4", "32": "T4", "33": "T4", "34": "T4", "35": "T4", "36": "T4", "37": "T4", "38": "T4", "39": "T4", "40": "T4", "41": "T5", "42": "T5", "43": "T5", "44": "T5", "45": "T5", "46": "T5", "47": "T5", "48": "T5", "49": "T5", "50": "T5"}, "def_topic": {"51": "T1", "52": "T1", "53": "T1", "54": "T1", "55": "T1", "56": "T1", "57": "T1", "58": "T1", "59": "T2", "60": "T2", "61": "T2", "62": "T2", "63": "T2", "64": "T2", "65": "T2", "66": "T2", "67": "T2", "68": "T2", "69": "T3", "70": "T3", "71": "T3", "72": "T3", "73": "T3", "74": "T3", "75": "T3", "76": "T3", "77": "T3", "78": "T3", "79": "T3", "80": "T3", "81": "T4", "82": "T4", "83": "T4", "84": "T4", "85": "T4", "86": "T4", "87": "T4", "88": "T4", "89": "T4", "90": "T4", "91": "T5", "92": "T5", "93": "T5", "94": "T5", "95": "T5", "96": "T5", "97": "T5", "98": "T5", "99": "T5", "100": "T5"}, "topic_names": {"T1": "Internet Bandwidth & Technology Issues", "T2": "Business Process Reengineering for E-Commerce", "T3": "Security Framework: Concerns & Solutions", "T4": "Global Supply Chain & Brand Strategy", "T5": "Cryptography Lesson 1"}};
+
+const TOPIC_ORDER = ["T1","T2","T3","T4","T5"];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let examinee = { name:"", date:"", section:"", studentNo:"" };
+let mcqAnswers = {};   // {num: "A"/"B"/"C"/"D"}
+let defAnswers = {};   // {num: "typed text"}
+let timerInterval = null;
+let secondsLeft = 3*60*60; // 3 hours
+let submitted = false;
+
+/* ============================================================
+   UTIL
+   ============================================================ */
+function fmtTime(sec){
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":");
+}
+function pct(n,d){ return d===0 ? 0 : Math.round((n/d)*1000)/10; }
+
+/* ============================================================
+   STUDENT NUMBER -> NAME LOOKUP
+   The class roster lives only on the grading server (see
+   grading-backend.gs). This page never holds student names or
+   numbers except the one the person currently typed.
+   ============================================================ */
+let lookupTimer = null;
+let confirmedLookup = { section:"", studentNo:"", name:"" }; // last server-confirmed match
+
+async function doLookup(section, studentNo){
+  const nameField = document.getElementById("fName");
+  const hint = document.getElementById("lookupHint");
+  if(!section){
+    nameField.value = "";
+    hint.textContent = "Select your section, then enter your student number — your name will fill in automatically.";
+    hint.style.color = "";
+    return;
+  }
+  if(!studentNo){
+    nameField.value = "";
+    hint.textContent = "Enter your student number to look up your name.";
+    hint.style.color = "";
+    return;
+  }
+  hint.textContent = "Looking up your name…";
+  hint.style.color = "";
+  try{
+    const resp = await fetch(GRADING_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "lookup", section, studentNo })
+    });
+    if(!resp.ok) throw new Error("Bad response: " + resp.status);
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    if(data.name){
+      nameField.value = data.name;
+      confirmedLookup = { section, studentNo, name: data.name };
+      hint.textContent = "Name matched from the " + section + " class list.";
+      hint.style.color = "var(--good)";
+    }else{
+      nameField.value = "";
+      confirmedLookup = { section:"", studentNo:"", name:"" };
+      hint.textContent = "Student number not found on the " + section + " class list. Double-check the number and section.";
+      hint.style.color = "var(--bad)";
+    }
+  }catch(err){
+    nameField.value = "";
+    confirmedLookup = { section:"", studentNo:"", name:"" };
+    hint.textContent = "Couldn't reach the class-list server. Check your connection and try again.";
+    hint.style.color = "var(--bad)";
+  }
+}
+function refreshNameLookup(){
+  const section = document.getElementById("fSection").value;
+  const studentNo = document.getElementById("fStudentNo").value.trim();
+  clearTimeout(lookupTimer);
+  lookupTimer = setTimeout(()=>doLookup(section, studentNo), 400); // debounce while typing
+}
+document.getElementById("fSection").addEventListener("change", refreshNameLookup);
+document.getElementById("fStudentNo").addEventListener("input", refreshNameLookup);
+
+/* ============================================================
+   ATTEMPT TRACKING (how many times this examinee has taken it)
+   Student number is the primary key.
+   ============================================================ */
+function ordinal(n){
+  const s = ["th","st","nd","rd"], v = n % 100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+function attemptKeyFor(section, studentNo){
+  return "midterm_attempts::" + (section||"").trim().toLowerCase() + "|" + (studentNo||"").trim();
+}
+function recordAttempt(section, studentNo){
+  const key = attemptKeyFor(section, studentNo);
+  let count = 1;
+  try{
+    count = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+    localStorage.setItem(key, String(count));
+  }catch(e){
+    // localStorage unavailable (e.g. private browsing) — just treat as first attempt
+    count = 1;
+  }
+  return count;
+}
+
+/* ============================================================
+   RENDER: START -> EXAM
+   ============================================================ */
+document.getElementById("startBtn").addEventListener("click", ()=>{
+  const section = document.getElementById("fSection").value;
+  const studentNo = document.getElementById("fStudentNo").value.trim();
+  const date = document.getElementById("fDate").value;
+  const err = document.getElementById("err");
+  // Require a server-confirmed match for exactly the section + number currently entered.
+  const matched = confirmedLookup.section === section && confirmedLookup.studentNo === studentNo && confirmedLookup.name;
+  if(!section || !studentNo || !matched || !date){
+    err.textContent = "Please select your section and enter a student number that matches the class list (wait for the name to fill in), plus today's date, before starting.";
+    err.style.display = "block";
+    return;
+  }
+  const name = confirmedLookup.name;
+  err.style.display = "none";
+  const attempt = recordAttempt(section, studentNo);
+  examinee = { name, date, section, studentNo, attempt };
+  document.getElementById("barName").textContent = name;
+  document.getElementById("barStudentNo").textContent = studentNo;
+  document.getElementById("barSection").textContent = section;
+  document.getElementById("barDate").textContent = date;
+  document.getElementById("barAttempt").textContent = `${ordinal(attempt)} attempt`;
+  if(attempt > 1){
+    document.getElementById("barAttempt").classList.add("repeat");
+  }
+
+  const endTime = new Date(Date.now() + secondsLeft*1000);
+  examinee.endTime = endTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  document.getElementById("barEndTime").textContent = examinee.endTime;
+
+  buildMCQ();
+  buildDefs();
+
+  document.getElementById("screen-start").classList.remove("show");
+  document.getElementById("screen-exam").classList.add("show");
+  window.scrollTo(0,0);
+  startTimer();
+});
+
+function buildMCQ(){
+  const c = document.getElementById("mcqContainer");
+  c.innerHTML = "";
+  EXAM.mcq.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "q";
+    const choicesHtml = ["A","B","C","D"].map(letter=>{
+      const text = item.choices[letter] || "";
+      return `<label class="choice" data-num="${item.num}" data-letter="${letter}">
+                <input type="radio" name="mcq_${item.num}" value="${letter}">
+                <span><b>${letter}.</b> ${text}</span>
+              </label>`;
+    }).join("");
+    div.innerHTML = `
+      <div class="qtext"><span class="qnum">${item.num}.</span>${item.q}</div>
+      <div class="choices">${choicesHtml}</div>
+    `;
+    c.appendChild(div);
+  });
+  c.addEventListener("change", e=>{
+    if(e.target.name && e.target.name.startsWith("mcq_")){
+      const num = e.target.name.split("_")[1];
+      mcqAnswers[num] = e.target.value;
+      // visual state
+      document.querySelectorAll(`.choice[data-num="${num}"]`).forEach(el=>{
+        el.classList.toggle("checked", el.dataset.letter === e.target.value);
+      });
+      updateProgress();
+    }
+  });
+}
+
+function buildDefs(){
+  const c = document.getElementById("defContainer");
+  c.innerHTML = "";
+  EXAM.defs.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "q defRow";
+    div.innerHTML = `
+      <div class="qtext"><span class="qnum">${item.num}.</span>${item.text}</div>
+      <input type="text" id="def_${item.num}" placeholder="Type your answer here">
+    `;
+    c.appendChild(div);
+  });
+  c.addEventListener("input", e=>{
+    if(e.target.id && e.target.id.startsWith("def_")){
+      const num = e.target.id.split("_")[1];
+      defAnswers[num] = e.target.value;
+      updateProgress();
+    }
+  });
+}
+
+function updateProgress(){
+  const total = 100;
+  const answered = Object.keys(mcqAnswers).filter(k=>mcqAnswers[k]).length +
+                    Object.keys(defAnswers).filter(k=>defAnswers[k] && defAnswers[k].trim()).length;
+  document.getElementById("topProgressFill").style.width = (answered/total*100) + "%";
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTimer(){
+  const el = document.getElementById("timer");
+  timerInterval = setInterval(()=>{
+    secondsLeft--;
+    el.textContent = fmtTime(Math.max(secondsLeft,0));
+    if(secondsLeft <= 300) el.classList.add("low");
+    if(secondsLeft <= 0){
+      clearInterval(timerInterval);
+      finishExam(true);
+    }
+  }, 1000);
+}
+
+/* ============================================================
+   SUBMIT / GRADE
+   ============================================================ */
+document.getElementById("submitBtn").addEventListener("click", ()=>{
+  const answered = Object.keys(mcqAnswers).filter(k=>mcqAnswers[k]).length +
+                    Object.keys(defAnswers).filter(k=>defAnswers[k] && defAnswers[k].trim()).length;
+  const unanswered = 100 - answered;
+  let ok = true;
+  if(unanswered > 0){
+    ok = confirm(`You have ${unanswered} unanswered item(s). Submit anyway?`);
+  }
+  if(ok) finishExam(false);
+});
+
+// PASTE your deployed Google Apps Script Web App URL here (see grading-backend.gs).
+// It must end in /exec.
+const GRADING_ENDPOINT = "https://script.google.com/macros/s/AKfycbwKGhfsDapKzK71MQGi6dEZZVYYia0xnc_vGcB-A3dLqMNNuAMlfE2rXuXLujEHVGZ7/exec";
+
+async function finishExam(timeUp){
+  if(submitted) return;
+  submitted = true;
+  if(timerInterval) clearInterval(timerInterval);
+
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Grading…";
+
+  let serverResult;
+  try{
+    const resp = await fetch(GRADING_ENDPOINT, {
+      method: "POST",
+      // text/plain avoids a CORS preflight against Apps Script
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        examinee: { name: examinee.name, date: examinee.date, section: examinee.section, studentNo: examinee.studentNo, attempt: examinee.attempt },
+        mcqAnswers, defAnswers, timeUp
+      })
+    });
+    if(!resp.ok) throw new Error("Bad response: " + resp.status);
+    serverResult = await resp.json();
+    if(serverResult.error) throw new Error(serverResult.error);
+  }catch(err){
+    submitted = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Finish & Submit Exam";
+    alert("Couldn't reach the grading server. Check your internet connection and try again.\n\n(" + err.message + ")");
+    return;
+  }
+
+  // Merge the server's grading (which knows the answer key) with the
+  // question text/choices we already have on the client (not secret).
+  const topicScore = {}; TOPIC_ORDER.forEach(t=>topicScore[t]={c:0,total:0});
+  serverResult.reviewP1.forEach(row=>{
+    const topic = EXAM.mcq_topic[String(row.num)];
+    topicScore[topic].total++;
+    if(row.isCorrect) topicScore[topic].c++;
+  });
+  serverResult.reviewP2.forEach(row=>{
+    const topic = EXAM.def_topic[String(row.num)];
+    topicScore[topic].total++;
+    if(row.isCorrect) topicScore[topic].c++;
+  });
+
+  const reviewP1 = serverResult.reviewP1.map(row=>{
+    const item = EXAM.mcq.find(m=>m.num===row.num);
+    return {num:row.num, q:item.q, given:row.given, isCorrect:row.isCorrect,
+      givenText: row.given ? (item.choices[row.given]||"") : "(no answer)"};
+  });
+  const reviewP2 = serverResult.reviewP2.map(row=>{
+    const item = EXAM.defs.find(d=>d.num===row.num);
+    return {num:row.num, text:item.text, given: row.given || "(no answer)", isCorrect:row.isCorrect};
+  });
+
+  renderResults({
+    p1correct: serverResult.p1correct,
+    p2correct: serverResult.p2correct,
+    overall: serverResult.overall,
+    topicScore, reviewP1, reviewP2, timeUp
+  });
+
+  document.getElementById("screen-exam").classList.remove("show");
+  document.getElementById("screen-results").classList.add("show");
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   EQUIVALENCY SCALE
+   ============================================================ */
+const EQUIV_SCALE = [
+  {min:97, max:100, grade:"1.00", desc:"Excellent"},
+  {min:94, max:96.99, grade:"1.25", desc:"Superior"},
+  {min:91, max:93.99, grade:"1.50", desc:"Very Good"},
+  {min:88, max:90.99, grade:"1.75", desc:"Very Good"},
+  {min:85, max:87.99, grade:"2.00", desc:"Good"},
+  {min:82, max:84.99, grade:"2.25", desc:"Good"},
+  {min:79, max:81.99, grade:"2.50", desc:"Satisfactory"},
+  {min:76, max:78.99, grade:"2.75", desc:"Satisfactory"},
+  {min:75, max:75.99, grade:"3.00", desc:"Passing"},
+  {min:0,  max:74.99, grade:"5.00", desc:"Failed"},
+];
+function getEquiv(percentage){
+  for(const row of EQUIV_SCALE){
+    if(percentage >= row.min && percentage <= row.max) return row;
+  }
+  return EQUIV_SCALE[EQUIV_SCALE.length-1];
+}
+
+/* ============================================================
+   RENDER RESULTS
+   ============================================================ */
+function renderResults(r){
+  lastResults = r;
+  document.getElementById("resWho").textContent =
+    `${examinee.name}  |  No: ${examinee.studentNo}  |  Date: ${examinee.date}` +
+    (examinee.section ? `  |  Section: ${examinee.section}` : "") +
+    `  |  ${ordinal(examinee.attempt||1)} attempt` +
+    (examinee.endTime ? `  |  Exam end time: ${examinee.endTime}` : "") +
+    (r.timeUp ? "  —  (auto-submitted: time expired)" : "");
+
+  const attemptBadge = document.getElementById("resAttemptBadge");
+  if((examinee.attempt||1) > 1){
+    attemptBadge.textContent = `RETAKE — ${ordinal(examinee.attempt)} TIME TAKING THIS EXAM`;
+    attemptBadge.style.display = "inline-block";
+  } else {
+    attemptBadge.style.display = "none";
+  }
+
+  const overallPct = pct(r.overall, 100);
+  document.getElementById("resScore").textContent = `${r.overall} / 100`;
+  document.getElementById("resPct").textContent = `${overallPct}%`;
+
+  const equiv = getEquiv(overallPct);
+  const equivEl = document.getElementById("resEquiv");
+  equivEl.textContent = `Grade Equivalent: ${equiv.grade}  (${equiv.desc})`;
+  equivEl.className = "equiv-pill " + (parseFloat(equiv.grade) <= 3.00 ? "equiv-pass" : "equiv-fail");
+
+  document.getElementById("p1c").textContent = r.p1correct;
+  document.getElementById("p1pct").textContent = pct(r.p1correct,50) + "%";
+  document.getElementById("p2c").textContent = r.p2correct;
+  document.getElementById("p2pct").textContent = pct(r.p2correct,50) + "%";
+  document.getElementById("ovc").innerHTML = `<b>${r.overall}</b>`;
+  document.getElementById("ovpct").innerHTML = `<b>${overallPct}%</b>`;
+
+  // topic frequency table
+  const tt = document.getElementById("topicTable");
+  TOPIC_ORDER.forEach(t=>{
+    const s = r.topicScore[t];
+    const p = pct(s.c, s.total);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t} — ${EXAM.topic_names[t]}</td>
+      <td class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${p}%"></div></div></td>
+      <td class="num">${s.c} / ${s.total}</td>
+      <td class="num">${p}%</td>
+    `;
+    tt.appendChild(tr);
+  });
+
+  // equivalency table
+  const et = document.getElementById("equivTable");
+  et.innerHTML = `<tr><th>Percentage Range</th><th>Grade</th><th>Description</th></tr>`;
+  EQUIV_SCALE.forEach(row=>{
+    const isCurrent = overallPct >= row.min && overallPct <= row.max;
+    const tr = document.createElement("tr");
+    if(isCurrent) tr.style.background = "#fdf8ec";
+    tr.innerHTML = `<td>${row.max===100?row.min+" – 100":row.min+" – "+row.max}%</td><td><b>${row.grade}</b></td><td>${row.desc}</td>`;
+    et.appendChild(tr);
+  });
+
+  // review lists
+  const rp1 = document.getElementById("reviewP1");
+  rp1.innerHTML = "";
+  r.reviewP1.forEach(it=>{
+    const div = document.createElement("div");
+    div.className = "review-item";
+    div.innerHTML = `<span class="tag ${it.isCorrect?'correct':'wrong'}">${it.isCorrect?'CORRECT':'INCORRECT'}</span>
+      <b>${it.num}.</b> ${it.q}<br>
+      Your answer: <b>${it.given || '—'}</b>${it.given?(' — '+it.givenText):''}`;
+    rp1.appendChild(div);
+  });
+
+  const rp2 = document.getElementById("reviewP2");
+  rp2.innerHTML = "";
+  r.reviewP2.forEach(it=>{
+    const div = document.createElement("div");
+    div.className = "review-item";
+    div.innerHTML = `<span class="tag ${it.isCorrect?'correct':'wrong'}">${it.isCorrect?'CORRECT':'INCORRECT'}</span>
+      <b>${it.num}.</b> ${it.text}<br>
+      Your answer: <b>${it.given}</b>`;
+    rp2.appendChild(div);
+  });
+}
+
+document.getElementById("printBtn").addEventListener("click", ()=>window.print());
+
+/* ============================================================
+   DOWNLOAD RESULT AS PDF (client-side, via jsPDF)
+   ============================================================ */
+let lastResults = null; // set by renderResults() below
+
+function downloadResultPDF(){
+  if(!lastResults){ alert("Please finish the exam first."); return; }
+  if(!(window.jspdf && window.jspdf.jsPDF)){
+    alert("PDF library did not load (no internet connection?). Use 'Print / Save as PDF' instead.");
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:"pt", format:"a4"});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  let y = 54;
+
+  function ensureSpace(need){
+    if(y + need > pageH - 40){
+      doc.addPage();
+      y = 54;
+    }
+  }
+  function heading(text, size=14){
+    ensureSpace(24);
+    doc.setFont("helvetica","bold"); doc.setFontSize(size); doc.setTextColor(18,35,63);
+    doc.text(text, marginX, y);
+    y += size*1.15;
+  }
+  function rule(){
+    ensureSpace(10);
+    doc.setDrawColor(200,160,77); doc.setLineWidth(1);
+    doc.line(marginX, y, pageW-marginX, y);
+    y += 14;
+  }
+  function line(text, opts={}){
+    const size = opts.size || 10.5;
+    const bold = opts.bold || false;
+    const color = opts.color || [28,29,33];
+    doc.setFont("helvetica", bold?"bold":"normal");
+    doc.setFontSize(size);
+    doc.setTextColor(...color);
+    const maxW = pageW - marginX*2;
+    const wrapped = doc.splitTextToSize(text, maxW);
+    wrapped.forEach(w=>{
+      ensureSpace(size*1.4);
+      doc.text(w, marginX, y);
+      y += size*1.4;
+    });
+  }
+  function spacer(h=8){ y += h; }
+
+  const r = lastResults;
+  const overallPct = pct(r.overall, 100);
+  const equiv = getEquiv(overallPct);
+
+  heading("MIDTERM EXAMINATION — RESULT", 16);
+  line(`Examinee: ${examinee.name}`, {bold:true, size:11});
+  line(`Student No: ${examinee.studentNo||"—"}   |   Date: ${examinee.date}   |   Section: ${examinee.section||"—"}`, {size:10, color:[100,100,100]});
+  const attemptLabel = `${ordinal(examinee.attempt||1)} attempt` + ((examinee.attempt||1) > 1 ? " (retake)" : "");
+  line(`Attempt: ${attemptLabel}`, {size:10.5, bold:true,
+    color: (examinee.attempt||1) > 1 ? [156,123,48] : [100,100,100]});
+  if(r.timeUp) line("(Auto-submitted — time expired)", {size:9, color:[179,38,30]});
+  spacer(6);
+  rule();
+
+  heading("Score Summary", 12);
+  line(`Overall Score: ${r.overall} / 100  (${overallPct}%)`, {bold:true, size:12});
+  line(`Grade Equivalent: ${equiv.grade}  —  ${equiv.desc}`, {bold:true, size:11,
+    color: parseFloat(equiv.grade)<=3 ? [30,122,61] : [179,38,30]});
+  spacer(4);
+  line(`Part I — Multiple Choice: ${r.p1correct} / 50  (${pct(r.p1correct,50)}%)`);
+  line(`Part II — Definition: ${r.p2correct} / 50  (${pct(r.p2correct,50)}%)`);
+  spacer(6);
+  rule();
+
+  heading("Frequency by Topic", 12);
+  TOPIC_ORDER.forEach(t=>{
+    const s = r.topicScore[t];
+    line(`${t} — ${EXAM.topic_names[t]}: ${s.c} / ${s.total}  (${pct(s.c,s.total)}%)`);
+  });
+  spacer(6);
+  rule();
+
+  heading("Part I — Answer Review (Multiple Choice)", 12);
+  r.reviewP1.forEach(it=>{
+    const status = it.isCorrect ? "[CORRECT]" : "[INCORRECT]";
+    const color = it.isCorrect ? [30,122,61] : [179,38,30];
+    line(`${it.num}. ${status}  Your answer: ${it.given || "—"}`, {size:9.5, color});
+  });
+  spacer(6);
+  rule();
+
+  heading("Part II — Answer Review (Definition)", 12);
+  r.reviewP2.forEach(it=>{
+    const status = it.isCorrect ? "[CORRECT]" : "[INCORRECT]";
+    const color = it.isCorrect ? [30,122,61] : [179,38,30];
+    line(`${it.num}. ${status}  Your answer: "${it.given}"`, {size:9.5, color});
+  });
+
+  const safeName = (examinee.name||"Examinee").replace(/[^a-z0-9]+/gi,"_").replace(/^_+|_+$/g,"");
+  const safeDate = (examinee.date||"").replace(/[^0-9-]/g,"");
+  const attemptTag = `Attempt${examinee.attempt||1}`;
+  doc.save(`${safeName}_MidtermResult_${safeDate}_${attemptTag}.pdf`);
+}
+document.getElementById("pdfBtn").addEventListener("click", downloadResultPDF);
+
+/* Warn before leaving mid-exam */
+window.addEventListener("beforeunload", (e)=>{
+  if(document.getElementById("screen-exam").classList.contains("show") && !submitted){
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+</script>
+</body>
+</html>
