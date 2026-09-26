@@ -49,7 +49,6 @@
   .hint{font-family:Arial,sans-serif;font-size:.82rem;color:var(--muted);margin-top:6px;}
   #err{color:var(--bad);font-family:Arial,sans-serif;font-size:.85rem;margin-top:8px;display:none;}
 
-  /* Exam header bar / timer */
   #examBar{
     position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;
     border-radius:var(--radius);padding:10px 18px;margin-bottom:18px;
@@ -95,7 +94,6 @@
   #screen-start, #screen-exam, #screen-results{display:none;}
   .show{display:block !important;}
 
-  /* Results */
   .score-hero{
     text-align:center;padding:26px 10px 18px;background:linear-gradient(135deg,#fff 0%,#faf6ea 100%);
     border-radius:var(--radius);border:1px solid var(--line);
@@ -126,6 +124,12 @@
   @media print{
     #examBar, .footer-actions, #printBtn, .no-print{display:none !important;}
     body{background:#fff;}
+  }
+
+  .reset-row{text-align:center;margin-top:10px;}
+  #resetAttemptLink{
+    background:none;border:none;color:#8a95c4;font-size:.76rem;
+    text-decoration:underline;cursor:pointer;font-family:Arial,sans-serif;padding:4px;
   }
 </style>
 </head>
@@ -172,6 +176,9 @@
       <div id="err">Please select your section and enter a valid student number found on the class list, plus today's date, before starting.</div>
       <div class="footer-actions">
         <button class="gold" id="startBtn">Start Examination →</button>
+      </div>
+      <div class="reset-row no-print">
+        <button type="button" id="resetAttemptLink">Instructor: reset attempt counter for this student</button>
       </div>
     </div>
   </div>
@@ -270,10 +277,10 @@ const TOPIC_ORDER = ["T1","T2","T3","T4","T5"];
    STATE
    ============================================================ */
 let examinee = { name:"", date:"", section:"", studentNo:"" };
-let mcqAnswers = {};   // {num: "A"/"B"/"C"/"D"}
-let defAnswers = {};   // {num: "typed text"}
+let mcqAnswers = {};
+let defAnswers = {};
 let timerInterval = null;
-let secondsLeft = 3*60*60; // 3 hours
+let secondsLeft = 3*60*60;
 let submitted = false;
 
 /* ============================================================
@@ -287,12 +294,9 @@ function pct(n,d){ return d===0 ? 0 : Math.round((n/d)*1000)/10; }
 
 /* ============================================================
    STUDENT NUMBER -> NAME LOOKUP
-   The class roster lives only on the grading server (see
-   grading-backend.gs). This page never holds student names or
-   numbers except the one the person currently typed.
    ============================================================ */
 let lookupTimer = null;
-let confirmedLookup = { section:"", studentNo:"", name:"" }; // last server-confirmed match
+let confirmedLookup = { section:"", studentNo:"", name:"" };
 
 async function doLookup(section, studentNo){
   const nameField = document.getElementById("fName");
@@ -342,14 +346,13 @@ function refreshNameLookup(){
   const section = document.getElementById("fSection").value;
   const studentNo = document.getElementById("fStudentNo").value.trim();
   clearTimeout(lookupTimer);
-  lookupTimer = setTimeout(()=>doLookup(section, studentNo), 400); // debounce while typing
+  lookupTimer = setTimeout(()=>doLookup(section, studentNo), 400);
 }
 document.getElementById("fSection").addEventListener("change", refreshNameLookup);
 document.getElementById("fStudentNo").addEventListener("input", refreshNameLookup);
 
 /* ============================================================
-   ATTEMPT TRACKING (how many times this examinee has taken it)
-   Student number is the primary key.
+   ATTEMPT TRACKING (client-side, keyed by section + student number)
    ============================================================ */
 function ordinal(n){
   const s = ["th","st","nd","rd"], v = n % 100;
@@ -365,11 +368,38 @@ function recordAttempt(section, studentNo){
     count = parseInt(localStorage.getItem(key) || "0", 10) + 1;
     localStorage.setItem(key, String(count));
   }catch(e){
-    // localStorage unavailable (e.g. private browsing) — just treat as first attempt
     count = 1;
   }
   return count;
 }
+
+/* ============================================================
+   INSTRUCTOR-ONLY: reset a student's attempt counter
+   Change RESET_CODE to whatever passcode you want to keep to
+   yourself. This does NOT touch the Google Sheet or any grades —
+   it only clears the "1st/2nd attempt" badge tracked in this
+   browser's storage for the section + student number currently
+   entered in the form above.
+   ============================================================ */
+const RESET_CODE = "RESET2026";
+
+document.getElementById("resetAttemptLink").addEventListener("click", ()=>{
+  const section = document.getElementById("fSection").value;
+  const studentNo = document.getElementById("fStudentNo").value.trim();
+  if(!section || !studentNo){
+    alert("Select the section and enter the student number first, then tap this again.");
+    return;
+  }
+  const code = prompt("Enter the instructor reset code:");
+  if(code === null) return;
+  if(code !== RESET_CODE){
+    alert("Incorrect code. Attempt counter not changed.");
+    return;
+  }
+  const key = attemptKeyFor(section, studentNo);
+  try{ localStorage.removeItem(key); }catch(e){}
+  alert("Done — this student's next submission on this device/browser will show as their 1st attempt.");
+});
 
 /* ============================================================
    RENDER: START -> EXAM
@@ -379,7 +409,6 @@ document.getElementById("startBtn").addEventListener("click", ()=>{
   const studentNo = document.getElementById("fStudentNo").value.trim();
   const date = document.getElementById("fDate").value;
   const err = document.getElementById("err");
-  // Require a server-confirmed match for exactly the section + number currently entered.
   const matched = confirmedLookup.section === section && confirmedLookup.studentNo === studentNo && confirmedLookup.name;
   if(!section || !studentNo || !matched || !date){
     err.textContent = "Please select your section and enter a student number that matches the class list (wait for the name to fill in), plus today's date, before starting.";
@@ -435,7 +464,6 @@ function buildMCQ(){
     if(e.target.name && e.target.name.startsWith("mcq_")){
       const num = e.target.name.split("_")[1];
       mcqAnswers[num] = e.target.value;
-      // visual state
       document.querySelectorAll(`.choice[data-num="${num}"]`).forEach(el=>{
         el.classList.toggle("checked", el.dataset.letter === e.target.value);
       });
@@ -504,7 +532,9 @@ document.getElementById("submitBtn").addEventListener("click", ()=>{
 
 // PASTE your deployed Google Apps Script Web App URL here (see grading-backend.gs).
 // It must end in /exec.
-const GRADING_ENDPOINT = "https://script.google.com/macros/s/AKfycbwKGhfsDapKzK71MQGi6dEZZVYYia0xnc_vGcB-A3dLqMNNuAMlfE2rXuXLujEHVGZ7/exec";
+const GRADING_ENDPOINT = "https://script.google.com/macros/s/AKfycbxSdrLGn26sdqQaT4m0NgUmV3ewP2TBvvcAy1AaP4a_bf5-h8JYJ3t2D4K68-n_5HbP/exec";
+
+const LOG_SHEET_ID = "";
 
 async function finishExam(timeUp){
   if(submitted) return;
@@ -519,7 +549,6 @@ async function finishExam(timeUp){
   try{
     const resp = await fetch(GRADING_ENDPOINT, {
       method: "POST",
-      // text/plain avoids a CORS preflight against Apps Script
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         examinee: { name: examinee.name, date: examinee.date, section: examinee.section, studentNo: examinee.studentNo, attempt: examinee.attempt },
@@ -537,8 +566,6 @@ async function finishExam(timeUp){
     return;
   }
 
-  // Merge the server's grading (which knows the answer key) with the
-  // question text/choices we already have on the client (not secret).
   const topicScore = {}; TOPIC_ORDER.forEach(t=>topicScore[t]={c:0,total:0});
   serverResult.reviewP1.forEach(row=>{
     const topic = EXAM.mcq_topic[String(row.num)];
@@ -631,7 +658,6 @@ function renderResults(r){
   document.getElementById("ovc").innerHTML = `<b>${r.overall}</b>`;
   document.getElementById("ovpct").innerHTML = `<b>${overallPct}%</b>`;
 
-  // topic frequency table
   const tt = document.getElementById("topicTable");
   TOPIC_ORDER.forEach(t=>{
     const s = r.topicScore[t];
@@ -646,7 +672,6 @@ function renderResults(r){
     tt.appendChild(tr);
   });
 
-  // equivalency table
   const et = document.getElementById("equivTable");
   et.innerHTML = `<tr><th>Percentage Range</th><th>Grade</th><th>Description</th></tr>`;
   EQUIV_SCALE.forEach(row=>{
@@ -657,7 +682,6 @@ function renderResults(r){
     et.appendChild(tr);
   });
 
-  // review lists
   const rp1 = document.getElementById("reviewP1");
   rp1.innerHTML = "";
   r.reviewP1.forEach(it=>{
@@ -686,7 +710,7 @@ document.getElementById("printBtn").addEventListener("click", ()=>window.print()
 /* ============================================================
    DOWNLOAD RESULT AS PDF (client-side, via jsPDF)
    ============================================================ */
-let lastResults = null; // set by renderResults() below
+let lastResults = null;
 
 function downloadResultPDF(){
   if(!lastResults){ alert("Please finish the exam first."); return; }
@@ -791,7 +815,6 @@ function downloadResultPDF(){
 }
 document.getElementById("pdfBtn").addEventListener("click", downloadResultPDF);
 
-/* Warn before leaving mid-exam */
 window.addEventListener("beforeunload", (e)=>{
   if(document.getElementById("screen-exam").classList.contains("show") && !submitted){
     e.preventDefault();
