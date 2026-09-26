@@ -532,7 +532,7 @@ document.getElementById("submitBtn").addEventListener("click", ()=>{
 
 // PASTE your deployed Google Apps Script Web App URL here (see grading-backend.gs).
 // It must end in /exec.
-const GRADING_ENDPOINT = "https://script.google.com/macros/s/AKfycbxSdrLGn26sdqQaT4m0NgUmV3ewP2TBvvcAy1AaP4a_bf5-h8JYJ3t2D4K68-n_5HbP/exec";
+const GRADING_ENDPOINT = "https://script.google.com/macros/s/AKfycbwKGhfsDapKzK71MQGi6dEZZVYYia0xnc_vGcB-A3dLqMNNuAMlfE2rXuXLujEHVGZ7/exec";
 
 const LOG_SHEET_ID = "";
 
@@ -558,6 +558,10 @@ async function finishExam(timeUp){
     if(!resp.ok) throw new Error("Bad response: " + resp.status);
     serverResult = await resp.json();
     if(serverResult.error) throw new Error(serverResult.error);
+    if(serverResult.ok === false) throw new Error(serverResult.message || "Server rejected the submission.");
+    if(!serverResult.reviewP1 || !serverResult.reviewP2){
+      throw new Error("Server did not return graded results. Raw response: " + JSON.stringify(serverResult).slice(0,200));
+    }
   }catch(err){
     submitted = false;
     submitBtn.disabled = false;
